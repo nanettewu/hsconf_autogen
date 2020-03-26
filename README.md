@@ -51,4 +51,4 @@ After running the test command, you'll find `thursday_program.pdf` at the top le
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
