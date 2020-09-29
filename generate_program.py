@@ -32,14 +32,23 @@ title_style = ParagraphStyle(
 header_style = ParagraphStyle(
 	'header',
 	fontName="Helvetica-bold",
-	fontSize=12,
+	fontSize=11,
 	textColor=HexColor(0x94645f),
+)
+
+table_cell_style = ParagraphStyle(
+		'table_cell_style',
+		fontName="Helvetica",
+		fontSize=8,
+		leftIndent=5,
+		textColor=HexColor(0x787878),
 )
 
 table_style = [
 	('ALIGN',(0,0),(0,-1),'LEFT'),
 	('ALIGN',(-1,0),(-1,-1),'RIGHT'),
 	('TEXTCOLOR', (0,0), (-1, -1), (0.29, 0.29, 0.29)),
+	('FONTNAME', (0,0), (0, -1), 'Helvetica-Bold'),
 ]
 
 '''
@@ -182,7 +191,7 @@ def _write_schedule_page(filename):
 	elements.append(Spacer(inch, .35 * inch))
 
 	# add first (location • host) line to page
-	zoom_link = f"<link href={data[0][0]}><u>Zoom Room</u></link>"
+	zoom_link = f"<link href={data[0][0]}><u>{data[0][0]}</u></link>"
 	moderators = data[0][1]
 	first_header = f"{zoom_link}  •  {moderators}"
 
@@ -200,17 +209,17 @@ def _write_schedule_page(filename):
 			elements = _add_table_to_doc(elements, room_of_speakers)
 			room_of_speakers = []
 
-			# if more than 6 rooms, use a new page; otherwise, add line break
+			# use a new page for every 3 rooms; otherwise, add line break
 			num_rooms += 1
-			if num_rooms == 6:
+			if num_rooms == 3 or num_rooms == 6:
 				elements.append(PageBreak())
 			else:
 				elements.append(Spacer(inch, .15 * inch))
 
 			# create room header "<Location> • <Moderators>"
-			# location = data[line_idx][0] # virtual version = use MIT building numbers (ex: 24-310)	
+			# location = data[line_idx][0] # in-person version = use MIT building numbers (ex: 24-310)	
 			line_idx += 1
-			location = f"<link href={data[line_idx][0]}><u>Zoom Room</u></link>" # in-person version = Zoom links
+			location = f"<link href={data[line_idx][0]}><u>{data[line_idx][0]}</u></link>" # virtual version = Zoom links
 			moderators = data[line_idx][1]
 			header = f"{zoom_link}  •  {moderators}"
 			
@@ -242,8 +251,10 @@ def _add_table_to_doc(elements, data):
 	processed_data = []
 	for speaker_info in data:
 		processed_data.append(_format_speaker_info(speaker_info))
+		if len(speaker_info) == 4 and speaker_info[3]: # includes blurb
+			processed_data.append([Paragraph(f"\n{speaker_info[3]}", table_cell_style), ''])
 
-	t = Table(processed_data, colWidths=[6.14*inch, 1.25*inch], rowHeights=0.22*inch, style=table_style)
+	t = Table(processed_data, colWidths=[6.14*inch, 1.25*inch], style=table_style)
 	elements.append(t)
 	return elements
 
