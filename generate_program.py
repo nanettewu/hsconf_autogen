@@ -209,11 +209,11 @@ def _write_schedule_page(filename):
 
 			# create room header "<Location> • <Moderators>"
 			# location = data[line_idx][0] # virtual version = use MIT building numbers (ex: 24-310)	
+			line_idx += 1
 			location = f"<link href={data[line_idx][0]}><u>Zoom Room</u></link>" # in-person version = Zoom links
 			moderators = data[line_idx][1]
 			header = f"{zoom_link}  •  {moderators}"
-			line_idx += 1
-
+			
 			# add header and line break
 			elements.append(Paragraph(header,header_style))
 			elements.append(Spacer(inch, .08 * inch))
