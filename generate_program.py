@@ -105,11 +105,12 @@ def write_csv_data(template_file, target_file):
 			
 			# add "watermark" (new PDF) on existing page
 			new_pdf = PdfFileReader(open("schedule_page.pdf", "rb"))
-			page = existing_pdf.getPage(counter)
-			page.mergePage(new_pdf.getPage(0))
-			output.addPage(page)
-
-			counter += 1
+			for page_num in range(new_pdf.getNumPages()):
+				page = existing_pdf.getPage(counter)
+				page.mergePage(new_pdf.getPage(page_num))
+				counter += 1
+				output.addPage(page)
+			
 			print("\tDone!")
 
 	# write all output
@@ -181,26 +182,46 @@ def _write_schedule_page(filename):
 	elements.append(Spacer(inch, .35 * inch))
 
 	# add first (location • host) line to page
-	first_header = ' • '.join(data[0])
+	zoom_link = f"<link href={data[0][0]}><u>Zoom Room</u></link>"
+	moderators = data[0][1]
+	first_header = f"{zoom_link}  •  {moderators}"
+
 	elements.append(Paragraph(first_header, header_style))
 	elements.append(Spacer(inch, .1 * inch))
 
 	# iterate through each line in the csv file
-	idx = 1
+	num_rooms = 0
+	line_idx = 1
 	room_of_speakers = []
-	while idx < len(data):
-		entry = data[idx]
-		if not entry[0]: # empty line, then skip to next room of speakers			
+	while line_idx < len(data):
+		entry = data[line_idx]
+		if not entry[0]: # detected empty line = done processing a room of speakers
+			# add current room of speakers to pdf, then reset to empty room		
 			elements = _add_table_to_doc(elements, room_of_speakers)
-			elements.append(Spacer(inch, .15 * inch))
 			room_of_speakers = []
-			idx += 1
-			header = ' • '.join(data[idx])
+
+			# if more than 6 rooms, use a new page; otherwise, add line break
+			num_rooms += 1
+			if num_rooms == 6:
+				elements.append(PageBreak())
+			else:
+				elements.append(Spacer(inch, .15 * inch))
+
+			# create room header "<Location> • <Moderators>"
+			# location = data[line_idx][0] # virtual version = use MIT building numbers (ex: 24-310)	
+			location = f"<link href={data[line_idx][0]}><u>Zoom Room</u></link>" # in-person version = Zoom links
+			moderators = data[line_idx][1]
+			header = f"{zoom_link}  •  {moderators}"
+			line_idx += 1
+
+			# add header and line break
 			elements.append(Paragraph(header,header_style))
 			elements.append(Spacer(inch, .08 * inch))
+		
 		else:
 			room_of_speakers += [entry]
-		idx += 1
+		
+		line_idx += 1
 
 	# add last set of speakers to page
 	if room_of_speakers:
@@ -218,9 +239,31 @@ def _write_schedule_page(filename):
 
 # creates a reportlab.platypus Table object and adds it to the page
 def _add_table_to_doc(elements, data):
-	t = Table(data, colWidths=[6.14*inch, 1.25*inch], rowHeights=0.22*inch, style=table_style)
+	processed_data = []
+	for speaker_info in data:
+		processed_data.append(_format_speaker_info(speaker_info))
+
+	t = Table(processed_data, colWidths=[6.14*inch, 1.25*inch], rowHeights=0.22*inch, style=table_style)
 	elements.append(t)
 	return elements
+
+def _format_speaker_info(speaker_info):
+	if len(speaker_info) <= 2:
+		return speaker_info
+
+	# extract data
+	title = speaker_info[0]
+	name = ' '.join(speaker_info[1].split()).strip() # multiple -> single space
+	section = speaker_info[2]
+ 
+	if section.startswith(('(', '<')): # 1st half presenter format: <name> ((section #)
+		section = f"(({section[1:]})"
+	elif section.endswith((')', '>')): # 2nd half presenter format: <name> (section #))
+		section = f"({section[:-1]}))"
+	else: # normal presenter: <name> (section #)
+		section = f"({section.split('.')[0]})" # remove decimal points with excel format
+
+	return [title, f"{name} {section}"]
 
 '''
 MAIN
