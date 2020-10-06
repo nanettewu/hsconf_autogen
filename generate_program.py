@@ -48,7 +48,7 @@ table_style = [
 	('ALIGN',(0,0),(0,-1),'LEFT'),
 	('ALIGN',(-1,0),(-1,-1),'RIGHT'),
 	('TEXTCOLOR', (0,0), (-1, -1), (0.29, 0.29, 0.29)),
-	('FONTNAME', (0,0), (0, -1), 'Helvetica-Bold'),
+	('FONTNAME', (0,0), (1, -1), 'Helvetica-Bold'),
 ]
 
 '''
@@ -200,6 +200,7 @@ def _write_schedule_page(filename, hide_loc):
 	elements.append(Spacer(inch, .1 * inch))
 
 	# iterate through each line in the csv file
+	time = title[:-2] # remove AM or PM
 	num_rooms = 0
 	line_idx = 1
 	room_of_speakers = []
@@ -207,7 +208,7 @@ def _write_schedule_page(filename, hide_loc):
 		entry = data[line_idx]
 		if not entry[0]: # detected empty line = done processing a room of speakers
 			# add current room of speakers to pdf, then reset to empty room		
-			elements = _add_table_to_doc(elements, room_of_speakers)
+			elements = _add_table_to_doc(time, elements, room_of_speakers)
 			room_of_speakers = []
 
 			# use a new page for every 3 rooms; otherwise, add line break
@@ -218,7 +219,6 @@ def _write_schedule_page(filename, hide_loc):
 				elements.append(Spacer(inch, .15 * inch))
 
 			# create room header "<Location> • <Moderators>"
-			# location = data[line_idx][0] # in-person version = use MIT building numbers (ex: 24-310)	
 			line_idx += 1
 			zoom_url = data[line_idx][0].strip()
 			location = f"<link href={zoom_url}><u>{zoom_url}</u></link>" # virtual version = Zoom links
@@ -236,7 +236,7 @@ def _write_schedule_page(filename, hide_loc):
 
 	# add last set of speakers to page
 	if room_of_speakers:
-		elements = _add_table_to_doc(elements, room_of_speakers)
+		elements = _add_table_to_doc(time, elements, room_of_speakers)
 
 	# generate PDF and write all contents to PDF
 	test_pdf = SimpleDocTemplate(
@@ -249,14 +249,18 @@ def _write_schedule_page(filename, hide_loc):
 	test_pdf.build(elements)
 
 # creates a reportlab.platypus Table object and adds it to the page
-def _add_table_to_doc(elements, data):
+def _add_table_to_doc(hour, elements, data):
 	processed_data = []
-	for speaker_info in data:
-		processed_data.append(_format_speaker_info(speaker_info))
+	for idx in range(len(data)):
+		speaker_info = data[idx]
+		speaker_timerange = _create_speaker_timerange(hour, idx)
+		processed_data.append([speaker_timerange] + _format_speaker_info(speaker_info))
 		if len(speaker_info) == 4 and speaker_info[3]: # includes blurb
 			processed_data.append([Paragraph(f"\n{speaker_info[3]}", table_cell_style)])
 
-	t = Table(processed_data, colWidths=[6.14*inch, 1.25*inch], style=table_style)
+	time_col_width = 0.68*inch if hour == "9" else 0.85*inch
+
+	t = Table(processed_data, colWidths=[time_col_width, 5.34*inch, 1.25*inch], style=table_style)
 	elements.append(t)
 	return elements
 
@@ -277,6 +281,9 @@ def _format_speaker_info(speaker_info):
 		section = f"({section.split('.')[0]})" # remove decimal points with excel format
 
 	return [title, f"{name} {section}"]
+
+def _create_speaker_timerange(hour, speaker_number):
+	return f"{hour}:{speaker_number}5-{hour}:{speaker_number+1}4"
 
 '''
 MAIN
