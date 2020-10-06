@@ -85,7 +85,7 @@ This function creates the high school conference PDF (target_file) by
 taking the CSV data extracted from the spreadsheet, and writing it on
 top of a template file (thursday.pdf or tuesday.pdf).  
 '''
-def write_csv_data(template_file, target_file):
+def write_csv_data(template_file, target_file, hide_loc):
 	print(f"\nProcessing csv data for {target_file}...")
 
 	# open the template used to write data on top of
@@ -110,7 +110,7 @@ def write_csv_data(template_file, target_file):
 	for time in AVAILABLE_TIMES:
 		if time in excel_files:
 			print(f"> Writing page {counter+1} from {time}")
-			_write_schedule_page(time)
+			_write_schedule_page(time, hide_loc)
 			
 			# add "watermark" (new PDF) on existing page
 			new_pdf = PdfFileReader(open("schedule_page.pdf", "rb"))
@@ -143,7 +143,7 @@ def _write_title_data(existing_pdf):
 		reader = csv.reader(csvfile)
 		date_and_time = next(reader)
 		date = date_and_time[0].upper().strip().replace("\"", "")
-		special_thanks = next(reader)
+		# special_thanks = next(reader)
 		
 		# use datetime package to get current timestamp
 		time = datetime.datetime.now().strftime("%b %d %H:%M")
@@ -155,13 +155,13 @@ def _write_title_data(existing_pdf):
 		can.drawString(73, 355, f"{date}  •  {date_and_time[1]}")
 
 		# write special thanks people
-		can.setFillColor(HexColor(0x7d8281))
-		can.setFont("Helvetica", 11)
-		x_pos = 540
-		y_pos = 174
-		for person in special_thanks:
-			can.drawRightString(x_pos, y_pos, person)
-			y_pos -= 17
+		# can.setFillColor(HexColor(0x7d8281))
+		# can.setFont("Helvetica", 11)
+		# x_pos = 540
+		# y_pos = 174
+		# for person in special_thanks:
+		# 	can.drawRightString(x_pos, y_pos, person)
+		# 	y_pos -= 17
 
 		# write current timestamp for last updated information
 		can.setFillColor(HexColor(0xdadde5))
@@ -179,7 +179,7 @@ def _write_title_data(existing_pdf):
 	return page
 
 # generates a schedule page (i.e. 9AM page with speakers & talk titles)
-def _write_schedule_page(filename):
+def _write_schedule_page(filename, hide_loc):
 	with open(f"csv/{filename}", "r") as csvfile:
 		data = list(csv.reader(csvfile))
 
@@ -191,9 +191,10 @@ def _write_schedule_page(filename):
 	elements.append(Spacer(inch, .35 * inch))
 
 	# add first (location • host) line to page
-	zoom_link = f"<link href={data[0][0]}><u>{data[0][0]}</u></link>"
+	zoom_url = data[0][0].strip()
+	first_location = f"<link href={zoom_url}><u>{zoom_url}</u></link>"
 	moderators = data[0][1]
-	first_header = f"{zoom_link}  •  {moderators}"
+	first_header = f"{first_location}  •  {moderators}" if not hide_loc else f"Zoom Link TBA  •  {moderators}"
 
 	elements.append(Paragraph(first_header, header_style))
 	elements.append(Spacer(inch, .1 * inch))
@@ -219,12 +220,13 @@ def _write_schedule_page(filename):
 			# create room header "<Location> • <Moderators>"
 			# location = data[line_idx][0] # in-person version = use MIT building numbers (ex: 24-310)	
 			line_idx += 1
-			location = f"<link href={data[line_idx][0]}><u>{data[line_idx][0]}</u></link>" # virtual version = Zoom links
+			zoom_url = data[line_idx][0].strip()
+			location = f"<link href={zoom_url}><u>{zoom_url}</u></link>" # virtual version = Zoom links
 			moderators = data[line_idx][1]
-			header = f"{zoom_link}  •  {moderators}"
+			header = f"{location}  •  {moderators}" if not hide_loc else f"Zoom Link TBA  •  {moderators}"
 			
 			# add header and line break
-			elements.append(Paragraph(header,header_style))
+			elements.append(Paragraph(header, header_style))
 			elements.append(Spacer(inch, .08 * inch))
 		
 		else:
@@ -252,7 +254,7 @@ def _add_table_to_doc(elements, data):
 	for speaker_info in data:
 		processed_data.append(_format_speaker_info(speaker_info))
 		if len(speaker_info) == 4 and speaker_info[3]: # includes blurb
-			processed_data.append([Paragraph(f"\n{speaker_info[3]}", table_cell_style), ''])
+			processed_data.append([Paragraph(f"\n{speaker_info[3]}", table_cell_style)])
 
 	t = Table(processed_data, colWidths=[6.14*inch, 1.25*inch], style=table_style)
 	elements.append(t)
@@ -267,10 +269,10 @@ def _format_speaker_info(speaker_info):
 	name = ' '.join(speaker_info[1].split()).strip() # multiple -> single space
 	section = speaker_info[2]
  
-	if section.startswith(('(', '<')): # 1st half presenter format: <name> ((section #)
-		section = f"(({section[1:]})"
-	elif section.endswith((')', '>')): # 2nd half presenter format: <name> (section #))
-		section = f"({section[:-1]}))"
+	if section.startswith(('(', '<')): # 1st half presenter format: <name> (*section #)
+		section = f"(*{section[1:]})"
+	elif section.endswith((')', '>')): # 2nd half presenter format: <name> (section #*)
+		section = f"({section[:-1]}*)"
 	else: # normal presenter: <name> (section #)
 		section = f"({section.split('.')[0]})" # remove decimal points with excel format
 
@@ -280,15 +282,15 @@ def _format_speaker_info(speaker_info):
 MAIN
 '''
 
-def main(excel_file, day):
+def main(excel_file, day, hide_loc=False):
 	# extract data from the excel spreadsheet
 	convert_excel_to_csv(excel_file)
 
 	# use the extracted data to write the program onto a PDF
 	if day == "thursday":
-		write_csv_data("thursday_template.pdf", f"thursday_program.pdf")
+		write_csv_data("thursday_template.pdf", f"thursday_program.pdf", hide_loc)
 	else: # tuesday
-		write_csv_data("tuesday_template.pdf", f"tuesday_program.pdf")
+		write_csv_data("tuesday_template.pdf", f"tuesday_program.pdf", hide_loc)
 
 	# cleanup
 	os.remove("schedule_page.pdf")
@@ -298,10 +300,12 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Generate 6.UAT HS Conference Program.')
 	parser.add_argument("-f", "--file", help="Excel spreadsheet file name (i.e. thursday.xlsx)")
 	parser.add_argument("-d", "--day", help="Tuesday or Thursday template")
+	parser.add_argument("-hl", "--hideloc", default=False, help="hide locations of presentation rooms (true/false)")
 
 	args = parser.parse_args()
 	excel_file = str(args.file) if args.file else None
 	day = str(args.day).lower() if args.day and str(args.day).lower() in ["thursday", "tuesday"] else None
+	hide_loc = True if str(args.hideloc).lower() == "true" else False
 
 	if not day:
 		print("ERROR: need to specify date of HS conference (Tuesday or Thursday) with -d flag.")
@@ -310,4 +314,4 @@ if __name__ == "__main__":
 	elif not os.path.exists(excel_file):
 		print(f"ERROR: {excel_file} does not exist in the top level directory.")
 	else:
-		main(excel_file, day)
+		main(excel_file, day, hide_loc)
