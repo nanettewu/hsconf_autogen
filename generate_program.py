@@ -40,7 +40,7 @@ table_cell_style = ParagraphStyle(
 		'table_cell_style',
 		fontName="Helvetica",
 		fontSize=8,
-		leftIndent=5,
+		leftIndent=2,
 		textColor=HexColor(0x787878),
 )
 
@@ -49,6 +49,7 @@ table_style = [
 	('ALIGN',(-1,0),(-1,-1),'RIGHT'),
 	('TEXTCOLOR', (0,0), (-1, -1), (0.29, 0.29, 0.29)),
 	('FONTNAME', (0,0), (1, -1), 'Helvetica-Bold'),
+	('FONTSIZE', (-1,0), (-1,-1), 8)
 ]
 
 '''
@@ -256,11 +257,11 @@ def _add_table_to_doc(hour, elements, data):
 		speaker_timerange = _create_speaker_timerange(hour, idx)
 		processed_data.append([speaker_timerange] + _format_speaker_info(speaker_info))
 		if len(speaker_info) == 4 and speaker_info[3]: # includes blurb
-			processed_data.append([Paragraph(f"\n{speaker_info[3]}", table_cell_style)])
+			processed_data.append(['', Paragraph(f"\n{speaker_info[3]}", table_cell_style), ''])
 
 	time_col_width = 0.68*inch if hour == "9" else 0.85*inch
 
-	t = Table(processed_data, colWidths=[time_col_width, 5.34*inch, 1.25*inch], style=table_style)
+	t = Table(processed_data, colWidths=[time_col_width, 5.14*inch, 1.45*inch], style=table_style)
 	elements.append(t)
 	return elements
 
