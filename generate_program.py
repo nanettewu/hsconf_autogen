@@ -39,8 +39,8 @@ header_style = ParagraphStyle(
 table_cell_style = ParagraphStyle(
 		'table_cell_style',
 		fontName="Helvetica",
-		fontSize=8,
-		leftIndent=2,
+		fontSize=9,
+		leftIndent=1,
 		textColor=HexColor(0x787878),
 )
 
@@ -49,7 +49,7 @@ table_style = [
 	('ALIGN',(-1,0),(-1,-1),'RIGHT'),
 	('TEXTCOLOR', (0,0), (-1, -1), (0.29, 0.29, 0.29)),
 	('FONTNAME', (0,0), (1, -1), 'Helvetica-Bold'),
-	('FONTSIZE', (-1,0), (-1,-1), 8)
+	('FONTSIZE', (-1,0), (-1,-1), 10),
 ]
 
 '''
@@ -86,7 +86,10 @@ This function creates the high school conference PDF (target_file) by
 taking the CSV data extracted from the spreadsheet, and writing it on
 top of a template file (thursday.pdf or tuesday.pdf).  
 '''
-def write_csv_data(template_file, target_file, hide_loc):
+def write_csv_data(day, hide_loc):
+	template_file = f"{day}_template.pdf"
+	target_file = f"{day}_program.pdf"
+
 	print(f"\nProcessing csv data for {target_file}...")
 
 	# open the template used to write data on top of
@@ -111,7 +114,7 @@ def write_csv_data(template_file, target_file, hide_loc):
 	for time in AVAILABLE_TIMES:
 		if time in excel_files:
 			print(f"> Writing page {counter+1} from {time}")
-			_write_schedule_page(time, hide_loc)
+			_write_schedule_page(day, time, hide_loc)
 			
 			# add "watermark" (new PDF) on existing page
 			new_pdf = PdfFileReader(open("schedule_page.pdf", "rb"))
@@ -165,7 +168,7 @@ def _write_title_data(existing_pdf):
 		# 	y_pos -= 17
 
 		# write current timestamp for last updated information
-		can.setFillColor(HexColor(0xdadde5))
+		can.setFillColor(HexColor(0xc7c7c7))
 		can.setFont("Helvetica", 12)
 		can.drawString(392, 50, last_updated)
 		can.save()
@@ -180,7 +183,9 @@ def _write_title_data(existing_pdf):
 	return page
 
 # generates a schedule page (i.e. 9AM page with speakers & talk titles)
-def _write_schedule_page(filename, hide_loc):
+def _write_schedule_page(day, filename, hide_loc):
+	formatted_day = "Thursday" if day == "thursday" else "Tuesday"
+
 	with open(f"csv/{filename}", "r") as csvfile:
 		data = list(csv.reader(csvfile))
 
@@ -188,7 +193,7 @@ def _write_schedule_page(filename, hide_loc):
 
 	# add title (i.e. 9AM) to top of page
 	title = filename.split('.')[0] # i.e. extracts "9AM" from "9AM.csv"
-	elements.append(Paragraph(title, title_style))
+	elements.append(Paragraph(f"{title} • {formatted_day}", title_style))
 	elements.append(Spacer(inch, .35 * inch))
 
 	# add first (location • host) line to page
@@ -198,7 +203,7 @@ def _write_schedule_page(filename, hide_loc):
 	first_header = f"{first_location}  •  {moderators}" if not hide_loc else f"Zoom Link TBA  •  {moderators}"
 
 	elements.append(Paragraph(first_header, header_style))
-	elements.append(Spacer(inch, .1 * inch))
+	elements.append(Spacer(inch, .07 * inch))
 
 	# iterate through each line in the csv file
 	time = title[:-2] # remove AM or PM
@@ -228,7 +233,7 @@ def _write_schedule_page(filename, hide_loc):
 			
 			# add header and line break
 			elements.append(Paragraph(header, header_style))
-			elements.append(Spacer(inch, .08 * inch))
+			elements.append(Spacer(inch, .07 * inch))
 		
 		else:
 			room_of_speakers += [entry]
@@ -257,11 +262,12 @@ def _add_table_to_doc(hour, elements, data):
 		speaker_timerange = _create_speaker_timerange(hour, idx)
 		processed_data.append([speaker_timerange] + _format_speaker_info(speaker_info))
 		if len(speaker_info) == 4 and speaker_info[3]: # includes blurb
-			processed_data.append(['', Paragraph(f"\n{speaker_info[3]}", table_cell_style), ''])
+			processed_data.append(['', Paragraph(f"\n{speaker_info[3]}", table_cell_style)])
 
-	time_col_width = 0.68*inch if hour == "9" else 0.85*inch
+	time_col_width = 0.66*inch if hour == "9" else 0.83*inch
+	title_width = 5.28*inch if hour == "9" else 5.135*inch
 
-	t = Table(processed_data, colWidths=[time_col_width, 5.14*inch, 1.45*inch], style=table_style)
+	t = Table(processed_data, colWidths=[time_col_width, title_width, 1.45*inch], style=table_style)
 	elements.append(t)
 	return elements
 
@@ -295,10 +301,7 @@ def main(excel_file, day, hide_loc=False):
 	convert_excel_to_csv(excel_file)
 
 	# use the extracted data to write the program onto a PDF
-	if day == "thursday":
-		write_csv_data("thursday_template.pdf", f"thursday_program.pdf", hide_loc)
-	else: # tuesday
-		write_csv_data("tuesday_template.pdf", f"tuesday_program.pdf", hide_loc)
+	write_csv_data(day, hide_loc)
 
 	# cleanup
 	os.remove("schedule_page.pdf")
