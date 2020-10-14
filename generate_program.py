@@ -219,7 +219,7 @@ def _write_schedule_page(day, filename, hide_loc):
 
 			# use a new page for every 3 rooms; otherwise, add line break
 			num_rooms += 1
-			if num_rooms == 3 or num_rooms == 6:
+			if num_rooms == 2 or num_rooms == 4 or num_rooms == 6:
 				elements.append(PageBreak())
 			else:
 				elements.append(Spacer(inch, .15 * inch))
