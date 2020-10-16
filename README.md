@@ -22,21 +22,21 @@ Estimated time: 10 minutes
 ## Usage
 
 1. In each copy of the Google Sheets template, fill out metadata (date/time/people to thank) and speaker info for each time slot (9AM, 10AM...) **Follow the formatting carefully, or the Python script may behave incorrectly.**
-2. Once complete, download each Google Sheet as a Microsoft Excel document (.xslx). 
-3. Rename the corresponding sheet to `thursday.xslx` and/or `tuesday.xslx`.
+2. Once complete, download each Google Sheet as a Microsoft Excel document (.xlsx). 
+3. Rename the corresponding sheet to `thursday.xlsx` and/or `tuesday.xlsx`.
 4. Drag the sheets into the top level of the project repo.
 5. `cd` into the project, and make sure you've activated the virtual environment (`source .env/bin/activate`).
 6. To create the PDF, type the following command: `
-python3 generate_program.py -f [thursday|tuesday.xslx] -d [thursday|tuesday]`. Note that `-f` refers to the Excel spreadsheet filename and `-d` refers to the day of the week that the program is generated for. 
+python3 generate_program.py -f [thursday|tuesday.xlsx] -d [thursday|tuesday]`. Note that `-f` refers to the Excel spreadsheet filename and `-d` refers to the day of the week that the program is generated for. 
 7. The output PDF is named `thursday_program.pdf` or `tuesday_program.pdf`, depending on the flags specified.
 
 To try this out, test the following:
 
 ```
-python3 generate_program.py -f ex_thursday.xslx -d thursday
+python3 generate_program.py -f ex_thursday.xlsx -d thursday
 ```
 
-After running the test command, you'll find `thursday_program.pdf` at the top level of the project, generated with `ex_thursday.xslx`'s data.
+After running the test command, you'll find `thursday_program.pdf` at the top level of the project, generated with `ex_thursday.xlsx`'s data.
 
 
 
