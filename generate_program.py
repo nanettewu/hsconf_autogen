@@ -228,7 +228,7 @@ def _write_schedule_page(day, filename, hide_loc):
 			# create room header "<Location> • <Moderators>"
 			line_idx += 1
 			zoom_url = data[line_idx][0].strip()
-			location = f"<link href={zoom_url}><u>{zoom_url}</u></link>" # virtual version = Zoom links
+			location = f"<u>{zoom_url}</u>" # virtual version = Zoom links
 			moderators = data[line_idx][1]
 			header = f"{location}  •  {moderators}" if not hide_loc else f"Zoom Link TBA  •  {moderators}"
 			
@@ -263,7 +263,7 @@ def _add_table_to_doc(hour, elements, data):
 		speaker_timerange = _create_speaker_timerange(hour, idx)
 		processed_data.append([speaker_timerange] + _format_speaker_info(speaker_info))
 		if len(speaker_info) == 4 and speaker_info[3]: # includes blurb
-			processed_data.append(['', Paragraph(f"\n{speaker_info[3]}", table_cell_style)])
+			processed_data.append(['', Paragraph(f"\n{speaker_info[3].strip()}", table_cell_style)])
 
 	time_col_width = 0.66*inch if hour == "9" else 0.83*inch
 	title_width = 5.28*inch if hour == "9" else 5.135*inch
