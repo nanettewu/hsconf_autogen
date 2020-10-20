@@ -218,12 +218,12 @@ def _write_schedule_page(day, filename, hide_loc):
 			room_of_speakers = []
 
 			# use a new page for every 3 rooms; otherwise, add line break
-			# num_rooms += 1
-			# if num_rooms == 2 or num_rooms == 4 or num_rooms == 6:
-			# 	elements.append(PageBreak())
-			# else:
-			# 	elements.append(Spacer(inch, .15 * inch))
-			elements.append(Spacer(inch, .15 * inch))
+			num_rooms += 1
+			if num_rooms == 2 or num_rooms == 4 or num_rooms == 6:
+				elements.append(PageBreak())
+			else:
+				elements.append(Spacer(inch, .15 * inch))
+			# elements.append(Spacer(inch, .15 * inch))
 
 			# create room header "<Location> • <Moderators>"
 			line_idx += 1
@@ -277,7 +277,7 @@ def _format_speaker_info(speaker_info):
 		return speaker_info
 
 	# extract data
-	title = speaker_info[0]
+	title = speaker_info[0].strip()
 	name = ' '.join(speaker_info[1].split()).strip() # multiple -> single space
 	section = speaker_info[2]
  
