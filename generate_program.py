@@ -198,7 +198,7 @@ def _write_schedule_page(day, filename, hide_loc):
 
 	# add first (location • host) line to page
 	zoom_url = data[0][0].strip()
-	first_location = f"<link href={zoom_url}><u>{zoom_url}</u></link>"
+	first_location = f"<u>{zoom_url}</u>"
 	moderators = data[0][1]
 	first_header = f"{first_location}  •  {moderators}" if not hide_loc else f"Zoom Link TBA  •  {moderators}"
 
