@@ -39,8 +39,21 @@ python3 generate_program.py -f ex_thursday.xlsx -d thursday
 After running the test command, you'll find `thursday_program.pdf` at the top level of the project, generated with `ex_thursday.xlsx`'s data.
 
 
-
 *Note: this project is heavily hardcoded. If you encounter formatting errors, refer to the `reportlab` documentation below to fix them.*
+
+### Commands to Generate Programs
+
+```
+python3 generate_program.py -f thursday.xlsx -d thursday
+python3 generate_program.py -f tuesday.xlsx -d tuesday
+```
+
+To hide the locations (i.e. Zoom room links), use the `-hl true` flag (hl for hidden location):
+
+```
+python3 generate_program.py -f thursday.xlsx -d thursday -hl true
+python3 generate_program.py -f tuesday.xlsx -d tuesday -hl true
+```
 
 
 ## Built With
